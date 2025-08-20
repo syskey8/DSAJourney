@@ -6,6 +6,7 @@ A daily log of my Data Structures & Algorithms practice — one problem a day, b
 
 | 📅 Date    | 📚 Topic                    | 📝 Problem                                    | 🎯 Difficulty | 🔗 Link |
 |------------|-----------------------------|-----------------------------------------------|---------------|---------|
+| Aug 18     | Arrays / Sorting / Two Pointers / Hash Table / Binary Search | 349. Intersection of 2 Arrays         | 🟢 Easy     | [link](https://leetcode.com/problems/intersection-of-two-arrays/description/) |
 | Aug 13     | Arrays / Sorting / Two Pointers| 88. Merge Sorted Array         | 🟡 Medium     | [link](https://leetcode.com/problems/merge-sorted-array/description/) |
 | Aug 13     | Arrays / Sorting / Two Pointers| 75. Sort Colors                            | 🟡 Medium     | [link](https://leetcode.com/problems/sort-colors/description/) |
 | Aug 8      | Binary Search               | 540. Single Element in a Sorted Array         | 🟡 Medium     | [link](https://leetcode.com/problems/single-element-in-a-sorted-array/description/) |

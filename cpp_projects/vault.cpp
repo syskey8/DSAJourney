@@ -10,6 +10,26 @@ struct Entry {
     string password;
   };
 
+void search_entries(const vector<Entry>& vault) {
+  cin.ignore(numeric_limits<streamsize>::max(), '\n');
+  string query;
+  cout << "Search site: ";
+  getline(cin, query);
+
+  bool found = false;
+  for(const auto& e : vault) {
+    if(e.site.find(query) != string::npos) {
+      cout << "Site : " << e.site << endl;
+      cout << "Username: " << e.username << endl;
+      cout << "Password: " << e.password << endl;
+      found = true;
+    }
+  }
+  if(!found) {
+    cout << "No mathcing entries." << endl;
+  }
+}
+
 void add_entry(vector<Entry>& vault) {
   cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
@@ -50,7 +70,8 @@ int main () {
     cout << "Select an option: " << endl;
     cout << "1. Add" << endl;
     cout << "2. List" << endl;
-    cout << "3. Exit" << endl;
+    cout << "3. Search" << endl;
+    cout << "4. Exit" << endl;
     cin >> choice;
 
     switch(choice) {
@@ -60,10 +81,13 @@ int main () {
       case 2: 
         list_entries(vault);
         break;
-      case 3: return 0;
+      case 3: 
+        search_entries(vault);
+        break;
+      case 4:
+        return 0;
     }
   }
-
   return 0;
 }
 

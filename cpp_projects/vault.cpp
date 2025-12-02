@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <vector>
 #include <string>
 #include <limits>
@@ -23,7 +24,6 @@ string serialize(const vector<Entry>& vault) {
 }
 
 vector<Entry> deserialize(const string& text) {
-  cin.ignore(numeric_limits<streamsize>::max(), '\n');
   vector<Entry> vault;
   istringstream iss(text);
   string line;
@@ -41,8 +41,29 @@ vector<Entry> deserialize(const string& text) {
   return vault;
 }
 
+bool save_vault(const string& filename, const vector<Entry>& vault) {
+    string plain = serialize(vault);
+    ofstream out(filename, ios::trunc);
+    if (!out) {
+        cerr << "Error writing file\n";
+        return false;
+    }
+    out << plain;
+    return true;
+}
+
+bool load_vault(const string& filename, vector<Entry>& vault) {
+    ifstream in(filename);
+    if (!in) {
+        vault.clear();
+        return true;
+    }
+    string content((istreambuf_iterator<char>(in)), istreambuf_iterator<char>());
+    vault = deserialize(content);
+    return true;
+}
+
 void search_entries(const vector<Entry>& vault) {
-  cin.ignore(numeric_limits<streamsize>::max(), '\n');
   string query;
   cout << "Search site: ";
   getline(cin, query);
@@ -63,8 +84,6 @@ void search_entries(const vector<Entry>& vault) {
 }
 
 void add_entry(vector<Entry>& vault) {
-  cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
   Entry e;
   cout << "Site: ";
   getline(cin, e.site);
@@ -93,52 +112,37 @@ void list_entries(vector<Entry>& vault){
   }
 }
 
-int main () {
+int main() {
     vector<Entry> vault;
-    vector<Entry> test;
+    const string filename = "vault.dat";
 
-  while(true) {
-    int choice;
-    string s1;
-    cout << "Menu: " << endl;
-    cout << "Select an option: " << endl;
-    cout << "1. Add" << endl;
-    cout << "2. List" << endl;
-    cout << "3. Search" << endl;
-    cout << "4. Exit" << endl;
-    cout << "5. Serialize" << endl;
-    cout << "6. deserialize" << endl;
-    cin >> choice;
-    cout << "Choice :" << choice << endl;
+    load_vault(filename, vault);
 
-    switch(choice) {
-      case 1: 
-        add_entry(vault);
-        break;
-      case 2: 
-        list_entries(vault);
-        break;
-      case 3: 
-        search_entries(vault);
-        break;
-      case 4:
-        return 0;
-      case 5:
-        s1 = serialize(vault);
-        cout << s1 << endl;
-        break;
-      case 6:
-        test = deserialize(s1);
-        for (size_t i = 0; i < test.size(); ++i) {
-        const auto& e = test[i];
-        std::cout << "[" << i << "]\n";
-        std::cout << "  Site: " << e.site << "\n";
-        std::cout << "  Username: " << e.username << "\n";
-        std::cout << "  Password: " << e.password << "\n";
+    while (true) {
+        cout << "\nPassword Vault\n";
+        cout << "1. Add\n";
+        cout << "2. List\n";
+        cout << "3. Search\n";
+        cout << "4. Save and Exit\n";
+        cout << "Choice: ";
+
+        int choice;
+        if (!(cin >> choice)) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
+        }
+        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // one-time ignore
+
+        if (choice == 1) {
+            add_entry(vault);
+        } else if (choice == 2) {
+            list_entries(vault);
+        } else if (choice == 3) {
+            search_entries(vault);
+        } else if (choice == 4) {
+            save_vault(filename, vault);
+            return 0;
+        }
     }
-        break;
-    }
-  }
-  return 0;
 }
-

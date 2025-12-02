@@ -1,4 +1,4 @@
-#include <iostream>
+#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <vector>
@@ -44,7 +44,7 @@ vector<Entry> deserialize(const string& text) {
         if (!getline(iss, e.username)) break;
         if (!getline(iss, e.password)) break;
         if (!getline(iss, line)) break; // separator line
-        // could check line == "---" here if you want
+        // optional: if (line != "---") handle malformed data
         vault.push_back(e);
     }
 
@@ -59,11 +59,17 @@ bool save_vault(const string& filename,
 
     ofstream out(filename, ios::binary | ios::trunc);
     if (!out) {
-        cerr << "Error writing file\n";
+        cerr << "Error: could not open file for writing: " << filename << "\n";
         return false;
     }
+
     out.write(encrypted.data(),
               static_cast<std::streamsize>(encrypted.size()));
+    if (!out) {
+        cerr << "Error: failed while writing to file: " << filename << "\n";
+        return false;
+    }
+
     return true;
 }
 
@@ -72,12 +78,18 @@ bool load_vault(const string& filename,
                 const string& master_password) {
     ifstream in(filename, ios::binary);
     if (!in) {
+        // File does not exist yet – start with empty vault
         vault.clear();
-        return true; // file doesn't exist yet, treat as empty vault
+        return true;
     }
 
     string encrypted((istreambuf_iterator<char>(in)),
                       istreambuf_iterator<char>());
+    if (!in.good() && !in.eof()) {
+        cerr << "Error: failed while reading file: " << filename << "\n";
+        return false;
+    }
+
     if (encrypted.empty()) {
         vault.clear();
         return true;
@@ -86,26 +98,6 @@ bool load_vault(const string& filename,
     string plain = xor_data(encrypted, master_password);
     vault = deserialize(plain);
     return true;
-}
-
-void search_entries(const vector<Entry>& vault) {
-    string query;
-    cout << "Search site: ";
-    getline(cin, query);
-
-    bool found = false;
-    for (const auto& e : vault) {
-        if (e.site.find(query) != string::npos) {
-            cout << "Site: " << e.site << endl;
-            cout << "Username: " << e.username << endl;
-            cout << "Password: " << e.password << endl;
-            cout << "---------------\n";
-            found = true;
-        }
-    }
-    if (!found) {
-        cout << "No matching entries." << endl;
-    }
 }
 
 void add_entry(vector<Entry>& vault) {
@@ -123,17 +115,46 @@ void add_entry(vector<Entry>& vault) {
 
 void list_entries(const vector<Entry>& vault) {
     if (vault.empty()) {
-        cout << "Vault is empty" << endl;
+        cout << "Vault is empty.\n";
         return;
     }
 
     for (size_t i = 0; i < vault.size(); ++i) {
         const auto& e = vault[i];
-        cout << "[" << i << "]" << endl;
-        cout << "Site: " << e.site << endl;
-        cout << "Username: " << e.username << endl;
-        cout << "Password: " << e.password << endl;
+        cout << "[" << i << "]\n";
+        cout << "  Site: " << e.site << "\n";
+        cout << "  Username: " << e.username << "\n";
+        cout << "  Password: " << e.password << "\n";
     }
+}
+
+void search_entries(const vector<Entry>& vault) {
+    string query;
+    cout << "Search site: ";
+    getline(cin, query);
+
+    bool found = false;
+    for (const auto& e : vault) {
+        if (e.site.find(query) != string::npos) {
+            cout << "Site: " << e.site << "\n";
+            cout << "Username: " << e.username << "\n";
+            cout << "Password: " << e.password << "\n";
+            cout << "---------------\n";
+            found = true;
+        }
+    }
+    if (!found) {
+        cout << "No matching entries.\n";
+    }
+}
+
+void print_menu() {
+    cout << "\nPassword Vault\n";
+    cout << "1. Add entry\n";
+    cout << "2. List entries\n";
+    cout << "3. Search\n";
+    cout << "4. Save and Exit\n";
+    cout << "Choice: ";
 }
 
 int main() {
@@ -144,20 +165,19 @@ int main() {
     cout << "Enter master password: ";
     getline(cin, master_password);
 
-    load_vault(filename, vault, master_password);
+    if (!load_vault(filename, vault, master_password)) {
+        cerr << "Failed to load vault. Exiting.\n";
+        return 1;
+    }
 
     while (true) {
-        cout << "\nPassword Vault\n";
-        cout << "1. Add\n";
-        cout << "2. List\n";
-        cout << "3. Search\n";
-        cout << "4. Save and Exit\n";
-        cout << "Choice: ";
+        print_menu();
 
         int choice;
         if (!(cin >> choice)) {
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Invalid input. Enter a number.\n";
             continue;
         }
         cin.ignore(numeric_limits<streamsize>::max(), '\n'); // clear leftover '\n'
@@ -169,8 +189,13 @@ int main() {
         } else if (choice == 3) {
             search_entries(vault);
         } else if (choice == 4) {
-            save_vault(filename, vault, master_password);
+            if (!save_vault(filename, vault, master_password)) {
+                cerr << "Failed to save vault.\n";
+                return 1;
+            }
             return 0;
+        } else {
+            cout << "Invalid choice. Try again.\n";
         }
     }
 }
